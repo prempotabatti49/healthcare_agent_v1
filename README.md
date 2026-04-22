@@ -1,5 +1,5 @@
 # Sunflower - personalized AI health assistant app 
-A personalized healthcare AI agent that leverages memory (episodic, semantic, and medical), RAG pipelines, and multi-agent reasoning to provide context-aware health guidance based on a user’s history, habits, and medical data.
+A **personalized healthcare AI agent that leverages memory (episodic, semantic, and medical), and RAG pipeline** to provide context-aware health guidance based on a user’s history, habits, and medical data.
 
 ![alt text](<sunflower-pic1 - Copy-1.png>)
 
