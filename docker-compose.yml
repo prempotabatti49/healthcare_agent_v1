@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  # ── FastAPI backend ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: DOCKERFILE
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=${DATABASE_URL}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SUPERMEMORY_API_KEY=${SUPERMEMORY_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-me}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Streamlit frontend ───────────────────────────────────────────────────────
+  frontend:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./frontend:/app/frontend
+      - ./requirements.txt:/app/requirements.txt
+    command: >
+      sh -c "pip install streamlit requests --quiet &&
+             streamlit run frontend/app.py --server.port=8501 --server.address=0.0.0.0"
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: healthcare_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
